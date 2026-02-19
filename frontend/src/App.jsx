@@ -9,6 +9,7 @@ import ForgotPassword from "./pages/ForgotPassword.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
 import Home from "./pages/Home.jsx";
 import NotFound from "./pages/NotFound.jsx";
+import UserProfile from "./pages/UserProfile.jsx";
 
 function App() {
 	return (
@@ -26,6 +27,7 @@ function App() {
 				{/* Protected routes */}
 				<Route element={<RequireAuth />}>
 					<Route path="/home" element={<Home />} />
+					<Route path="/profile" element={<UserProfile />} />
 				</Route>
 
 				{/* Catch-all */}
