@@ -27,14 +27,14 @@ function Options() {
                 </div>
             </div>
             <hr className="border-0 h-0.5 bg-gray-400" />
-            <ul className="py-4 space-y-2">
-                <li>
+            <ul className="py-2">
+                <li className="rounded-lg px-3 py-2 transition hover:bg-purple-100 hover:text-purple-900">
                     <Link to="/profile" className="flex items-center gap-2">
                         <LiaUser size={25} />
                         <span>Profile</span>
                     </Link>
                 </li>
-                <li>
+                <li className="rounded-lg px-3 py-2 transition hover:bg-purple-100 hover:text-purple-900">
                     <button
                         type="button"
                         onClick={handleLogout}

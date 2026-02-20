@@ -1,11 +1,13 @@
 import { useEffect, useRef, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import classNames from "classnames";
 import { useAuth } from "../auth/useAuth.js";
 import { useProfile } from "../profile/useProfile.js";
 import Options from "./Options";
 import { FaUserCircle } from "react-icons/fa";
+import { HiOutlineMenu } from "react-icons/hi";
 
-function SimpleNav() {
+function SimpleNav({ onToggleSidebar }) {
     const [showOptions, setShowOptions] = useState(false);
     const menuWrapperRef = useRef(null);
     const { isAuthenticated, loading, user } = useAuth();
@@ -48,11 +50,22 @@ function SimpleNav() {
     };
 
     return (
-        <div className="sticky top-0 z-10 border-b border-white/10 bg-transparent backdrop-blur-md shadow-md">
+        <div className="sticky top-0 z-20 border-b border-white/10 bg-transparent backdrop-blur-md shadow-md">
             <div className="mx-auto flex items-center justify-between px-6 py-3 relative">
-                <h1 className="font-bold text-xl cursor-pointer">
-                    <Link to="/home">Task Planner</Link>
-                </h1>
+                <div className="flex items-center gap-3">
+                    <button
+                        type="button"
+                        onClick={onToggleSidebar}
+                        className="grid h-9 w-9 place-items-center rounded-md hover:bg-purple-200/85"
+                        aria-label="Open navigation menu"
+                    >
+                        <HiOutlineMenu size={22} />
+                    </button>
+
+                    <h1 className="font-bold text-xl cursor-pointer">
+                        <Link to="/home">Task Planner</Link>
+                    </h1>
+                </div>
 
                 <div ref={menuWrapperRef} className="relative">
                     <button
@@ -60,9 +73,11 @@ function SimpleNav() {
                         onClick={handleToggleOptions}
                         aria-label="Open account menu"
                         aria-expanded={showOptions}
-                        className={`h-10 w-10 rounded-full grid place-items-center transition
-                        ${!isAuthenticated || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-black/10"}
-                        ${showOptions ? "ring-2 ring-black/20" : ""}`}
+                        className={classNames(
+                            "h-10 w-10 rounded-full grid place-items-center transition",
+                            !isAuthenticated || loading ? "opacity-50 cursor-not-allowed" : "hover:bg-black/10",
+                            showOptions && "ring-2 ring-black/20"
+                        )}
                         disabled={!isAuthenticated || loading}
                     >
                         {avatarLetter ? (
