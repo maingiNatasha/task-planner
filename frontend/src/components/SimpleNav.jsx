@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../auth/useAuth.js";
-import { useProfile } from "../hooks/useProfile.js";
+import { useProfile } from "../profile/useProfile.js";
 import Options from "./Options";
 import { FaUserCircle } from "react-icons/fa";
 
@@ -9,7 +9,7 @@ function SimpleNav() {
     const [showOptions, setShowOptions] = useState(false);
     const menuWrapperRef = useRef(null);
     const { isAuthenticated, loading, user } = useAuth();
-    const { profile } = useProfile(user?.id);
+    const { profile } = useProfile();
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -33,7 +33,14 @@ function SimpleNav() {
         };
     }, [showOptions]);
 
-    const avatarLetter = profile?.username?.[0]?.toUpperCase() || profile?.firstname?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "";
+    const avatarLetter = useMemo(() => {
+        return (
+            profile?.username?.[0]?.toUpperCase() ||
+            profile?.firstname?.[0]?.toUpperCase() ||
+            user?.email?.[0]?.toUpperCase()||
+            ""
+        );
+    }, [profile?.username, profile?.firstname, user?.email]);
 
     const handleToggleOptions = () => {
         if (!isAuthenticated || loading) return;
@@ -59,7 +66,7 @@ function SimpleNav() {
                         disabled={!isAuthenticated || loading}
                     >
                         {avatarLetter ? (
-                            <span className="h-8 w-8 rounded-full bg-slate-800 text-white grid place-items-center font-semibold">
+                            <span className="h-8 w-8 rounded-full bg-purple-800 text-white grid place-items-center font-semibold">
                                 {avatarLetter}
                             </span>
                         ) : (
@@ -68,8 +75,8 @@ function SimpleNav() {
                     </button>
 
                     {isAuthenticated && showOptions && (
-                        <div className="absolute right-0 top-[72px]">
-                            <Options profile={profile} user={user} />
+                        <div className="absolute right-0 top-[72px] z-50">
+                            <Options />
                         </div>
                     )}
                 </div>

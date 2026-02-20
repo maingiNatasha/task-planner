@@ -1,11 +1,13 @@
 import { useAuth } from "../auth/useAuth.js";
+import { useProfile } from "../profile/useProfile.js";
 import { Link } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
 import { PiSignOut } from "react-icons/pi";
 import { LiaUser } from "react-icons/lia";
 
-function Options({ profile, user }) {
-    const { logout } = useAuth();
+function Options() {
+    const { logout, user } = useAuth();
+    const { profile } = useProfile();
 
     async function handleLogout() {
         try {
@@ -16,9 +18,9 @@ function Options({ profile, user }) {
     }
 
     return (
-        <div className="bg-purple-100 p-4 rounded-lg shadow-md">
+        <div className="rounded-2xl border border-white/60 bg-purple-50 p-4 shadow-lg text-sm">
             <div className="flex items-center gap-2 pb-4">
-                <FaUserCircle size={40} />
+                <FaUserCircle size={30} />
                 <div>
                     <h5 className="text-gray-600">{user?.email || "No email"}</h5>
                     <h5>{profile?.username || "No username yet"}</h5>
@@ -28,7 +30,7 @@ function Options({ profile, user }) {
             <ul className="py-4 space-y-2">
                 <li>
                     <Link to="/profile" className="flex items-center gap-2">
-                        <LiaUser size={30} />
+                        <LiaUser size={25} />
                         <span>Profile</span>
                     </Link>
                 </li>
@@ -38,7 +40,7 @@ function Options({ profile, user }) {
                         onClick={handleLogout}
                         className="flex w-full items-center gap-2 cursor-pointer"
                     >
-                        <PiSignOut size={30} />
+                        <PiSignOut size={25} />
                         Sign out
                     </button>
                 </li>
