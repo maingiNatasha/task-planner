@@ -1,4 +1,4 @@
-import pool from "../db/pool.js"
+import pool from "../db/pool.js";
 
 // Get a user by email
 export const getUserByEmail = async (email) => {
