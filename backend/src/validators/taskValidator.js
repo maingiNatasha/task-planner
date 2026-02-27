@@ -1,6 +1,7 @@
-import { body, param } from "express-validator";
+import { body, param, query } from "express-validator";
 
 const allowedStatus = ["completed", "pending", "in_progress"];
+const allowedCategory = ["work", "personal", "study", "health", "hobbies", "other"];
 
 export const createTaskValidator = [
     body("title")
@@ -14,7 +15,7 @@ export const createTaskValidator = [
         .escape(),
     body("category")
         .optional()
-        .trim(),
+        .isIn(allowedCategory).withMessage("Category is invalid"),
     body("deadline")
         .optional({ checkFalsy: true })
         .isISO8601().withMessage("Deadline must be a valid date")
@@ -37,7 +38,7 @@ export const updateTaskValidator = [
         .escape(),
     body("category")
         .optional()
-        .trim(),
+        .isIn(allowedCategory).withMessage("Category is invalid"),
     body("deadline")
         .optional({ checkFalsy: true })
         .isISO8601().withMessage("Deadline must be a valid date")
@@ -51,4 +52,13 @@ export const taskIdParamValidator = [
     param("id")
         .isInt({ min: 1 }).withMessage("Task id must be a positive integer")
         .toInt()
+];
+
+export const deleteTasksQueryValidator = [
+    query("status")
+        .optional()
+        .isIn(allowedStatus).withMessage("Status is invalid"),
+    query("category")
+        .optional()
+        .isIn(allowedCategory).withMessage("Category is invalid")
 ];

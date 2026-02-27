@@ -1,4 +1,4 @@
-import { getTasks, insertTask, updateTask } from "../models/taskModel.js";
+import { getTasks, insertTask, updateTask, deleteTaskById, deleteTasksByFilters } from "../models/taskModel.js";
 import { sendSuccess, sendError } from "../utils/response.js";
 
 // Get user tasks
@@ -56,6 +56,44 @@ export const modifyTask = async (req, res) => {
         }
 
         return sendSuccess(res, "Task updated successfully");
+    } catch (error) {
+        console.error(error);
+        return sendError(res, "Server error");
+    }
+};
+
+// Delete task
+export const removeTask = async(req, res) => {
+    try {
+        const deleted = await deleteTaskById(req.params.id, req.user.id);
+
+        if (!deleted) {
+            return sendError(res, "Task not found", 404);
+        }
+
+        return sendSuccess(res, "Task deleted successfully");
+    } catch (error) {
+        console.error(error);
+        return sendError(res, "Server error");
+    }
+};
+
+// Delete tasks by status/category
+export const removeTasks = async (req, res) => {
+    try {
+        const { status, category } = req.query;
+
+        if (!status && !category) {
+            return sendError(res, "Provide at least one filter: status or category", 400);
+        }
+
+        const deletedCount = await deleteTasksByFilters(req.user.id, { status, category });
+
+        if (deletedCount === 0) {
+            return sendError(res, "No tasks have been deleted", 400);
+        }
+
+        return sendSuccess(res, "Tasks deleted successfully", { deletedCount });
     } catch (error) {
         console.error(error);
         return sendError(res, "Server error");

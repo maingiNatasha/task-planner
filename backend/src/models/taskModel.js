@@ -65,3 +65,30 @@ export const updateTask = async (data) => {
 
     return { ok: true, reason: null };
 };
+
+// Delete one task (owner-only)
+export const deleteTaskById = async (deleteTaskById, userId) => {
+    const [result] = await pool.query("DELETE FROM tasks WHERE id = ? AND user_id = ?", [deleteTaskById, userId]);
+    console.log(result);
+    return result.affectedRows > 0;
+};
+
+// Bulk delete by optional filters (owner-only)
+export const deleteTasksByFilters = async (userId, { status, category }) => {
+    const where = ["user_id = ?"];
+    const values = [userId];
+
+    if (status !== undefined) {
+        where.push("status = ?");
+        values.push(status);
+    }
+
+    if (category !== undefined) {
+        where.push("category = ?");
+        values.push(category);
+    }
+
+    const [result] = await pool.query(`DELETE FROM tasks WHERE ${where.join(" AND ")}`, values);
+    console.log(result);
+    return result.affectedRows;
+};
