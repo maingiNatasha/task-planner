@@ -3,13 +3,15 @@ import classNames from "classnames";
 import { LiaUser } from "react-icons/lia";
 import { HiOutlineHome } from "react-icons/hi2";
 import { FiX } from "react-icons/fi";
+import { LiaTasksSolid } from "react-icons/lia";
 
 function SideNav({ open, onClose }) {
     const location = useLocation();
 
     const navItems = [
-        { icon: HiOutlineHome, to: "/home", label: "Home"},
-        { icon: LiaUser, to: "/profile", label: "Profile"},
+        { icon: HiOutlineHome, to: "/home", label: "Home" },
+        { icon: LiaUser, to: "/profile", label: "Profile" },
+        { icon: LiaTasksSolid, to: "/tasks", label: "My Tasks" },
     ];
 
     return (

@@ -39,25 +39,25 @@ export function TaskProvider({ children }) {
         }
     }, [isAuthenticated, user?.id, clearTasks]);
 
-    const createTask = useCallback(() => async (payload) => {
+    const createTask = useCallback(async (payload) => {
         const res = await taskApi.createTask(payload);
         await fetchTasks();
         return res;
     }, [fetchTasks]);
 
-    const updateTask = useCallback(() => async (id, payload) => {
+    const updateTask = useCallback(async (id, payload) => {
         const res = await taskApi.updateTask(id, payload);
         await fetchTasks();
         return res;
     }, [fetchTasks]);
 
-    const deleteTask = useCallback(() => async (id) => {
+    const deleteTask = useCallback(async (id) => {
         const res = await taskApi.deleteTask(id);
         await fetchTasks();
         return res;
     }, [fetchTasks]);
 
-    const deleteTasks = useCallback(() =>  async (filters) => {
+    const deleteTasks = useCallback(async (filters) => {
         const res = await taskApi.deleteTasks(filters);
         await fetchTasks();
         return res;
