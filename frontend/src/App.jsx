@@ -10,7 +10,7 @@ import ResetPassword from "./pages/ResetPassword.jsx";
 import Home from "./pages/Home.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import UserProfile from "./pages/UserProfile.jsx";
-import Tasks from "./pages/Tasks.jsx";
+import MyTasks from "./pages/MyTasks.jsx";
 
 function App() {
 	return (
@@ -29,7 +29,7 @@ function App() {
 				<Route element={<RequireAuth />}>
 					<Route path="/home" element={<Home />} />
 					<Route path="/profile" element={<UserProfile />} />
-					<Route path="/tasks" element={<Tasks />} />
+					<Route path="/tasks" element={<MyTasks />} />
 				</Route>
 
 				{/* Catch-all */}
