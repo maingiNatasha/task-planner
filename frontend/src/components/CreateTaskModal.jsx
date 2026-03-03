@@ -1,52 +1,196 @@
-import { useEffect } from "react";
-import { FiX } from "react-icons/fi";
+import { useState } from "react";
+import { useTask } from "../task/useTask.js";
+import { toast } from "react-toastify";
+import Modal from "./Modal.jsx";
+import Select from "react-select";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
+const INITIAL_FORM = {
+    title: "",
+    description: "",
+    category: "other",
+    deadline: "",
+    status: "pending"
+};
+
+const categoryOptions = [
+    { value: "other", label: "Other" },
+    { value: "work", label: "Work" },
+    { value: "personal", label: "Personal" },
+    { value: "study", label: "Study" },
+    { value: "health", label: "Health" }
+];
+
+const statusOptions = [
+    { value: "pending", label: "Pending" },
+    { value: "in_progress", label: "In Progress" },
+    { value: "completed", label: "Completed" }
+];
 
 function CreateTaskModal({ onClose }) {
-    useEffect(() => {
-        const onEsc = (event) => {
-            if (event.key === "Escape") onClose();
-        };
+    const { createTask } = useTask();
+    const [form, setForm] = useState(INITIAL_FORM);
+    const [selectedDeadline, setSelectedDeadline] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState("");
 
-        document.addEventListener("keydown", onEsc);
-        document.body.style.overflow = "hidden";
+    const handleChange = (event) => {
+        const { name, value } = event.target;
+        setForm((prev) => ({ ...prev, [name]: value}));
+    };
 
-        return () => {
-            document.removeEventListener("keydown", onEsc);
-            document.body.style.overflow = "";
-        };
-    }, [onClose]);
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setError("");
+
+        const title = form.title.trim();
+        if (!title) {
+            setError("Title is required");
+            return;
+        }
+
+        const deadline = selectedDeadline ? selectedDeadline.toLocaleDateString("en-CA") : undefined // yyyy-mm-dd
+
+        setSubmitting(true);
+        try {
+            const res = await createTask({
+                title,
+                description: form.description.trim(),
+                category: form.category,
+                deadline,
+                status: form.status
+            });
+
+            onClose();
+            toast.success(res?.message || "Task created successfully");
+        } catch (err) {
+            setError(err?.message || "Failed to create task");
+            toast.error(err?.message || "Failed to create task");
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     return (
-        <div className="fixed inset-0 z-50">
-            <button
-                type="button"
-                aria-label="Close create task modal overlay"
-                className="absolute inset-0 bg-black/50 backdrop-blur-[1px]"
-                onClick={onClose}
-            />
+        <Modal title={"Create Task"} onClose={onClose}>
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">Title</label>
+                    <input
+                        name="title"
+                        value={form.title}
+                        onChange={handleChange}
+                        maxLength={120}
+                        required
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+                        placeholder="Task title"
+                    />
+                </div>
 
-            <div className="relative z-10 flex min-h-full items-center justify-center p-4">
-                <div className="w-full max-w-lg rounded-2xl border border-white/20 bg-white shadow-2xl">
-                    <div className="flex items-center justify-between px-5 py-4">
-                        <h2 className="text-lg font-bold">Create Task</h2>
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            aria-label="Close create task modal"
-                            className="grid h-9 w-9 place-items-center rounded-md hover:bg-purple-100"
-                        >
-                            <FiX size={20} />
-                        </button>
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">Description</label>
+                    <textarea
+                        name="description"
+                        value={form.description}
+                        onChange={handleChange}
+                        maxLength={1000}
+                        rows={3}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+                        placeholder="Optional description"
+                    />
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">Category</label>
+                        <Select
+                            options={categoryOptions}
+                            value={categoryOptions.find((opt) => opt.value === form.category)}
+                            onChange={(opt) => setForm((prev) => ({ ...prev, category: opt?.value || "other" }))}
+                            menuPortalTarget={document.body}
+                            menuPosition="fixed"
+                            styles={{
+                            control: (base, state) => ({
+                                ...base,
+                                fontSize: "0.875rem", // text-sm
+                                borderColor: state.isFocused ? "#a855f7" : "#cbd5e1",
+                                boxShadow: state.isFocused ? "0 0 0 2px rgba(168,85,247,0.15)" : "none",
+                                minHeight: 42
+                            }),
+                            option: (base, state) => ({
+                                ...base,
+                                fontSize: "0.875rem", // text-sm
+                                backgroundColor: state.isSelected ? "#7e22ce" : state.isFocused ? "#f3e8ff" : "#fff",
+                                color: state.isSelected ? "#fff" : "#334155"
+                            }),
+                            menuPortal: (base) => ({ ...base, zIndex: 9999 })
+                            }}
+                        />
                     </div>
 
-                    <div className="px-5 pb-4">
-                        <form>
-                            Form
-                        </form>
+                    <div>
+                        <label className="mb-1 block text-sm font-medium text-slate-700">Status</label>
+                        <Select
+                            options={statusOptions}
+                            value={statusOptions.find((opt) => opt.value === form.status)}
+                            onChange={(opt) => setForm((prev) => ({ ...prev, status: opt?.value || "pending" }))}
+                            menuPortalTarget={document.body}
+                            menuPosition="fixed"
+                            styles={{
+                            control: (base, state) => ({
+                                ...base,
+                                fontSize: "0.875rem", // text-sm
+                                borderColor: state.isFocused ? "#a855f7" : "#cbd5e1",
+                                boxShadow: state.isFocused ? "0 0 0 2px rgba(168,85,247,0.15)" : "none",
+                                minHeight: 42
+                            }),
+                            option: (base, state) => ({
+                                ...base,
+                                fontSize: "0.875rem", // text-sm
+                                backgroundColor: state.isSelected ? "#7e22ce" : state.isFocused ? "#f3e8ff" : "#fff",
+                                color: state.isSelected ? "#fff" : "#334155"
+                            }),
+                            menuPortal: (base) => ({ ...base, zIndex: 9999 })
+                            }}
+                        />
                     </div>
                 </div>
-            </div>
-        </div>
+
+                <div>
+                    <label className="mb-1 block text-sm font-medium text-slate-700">Deadline</label>
+                    <DatePicker
+                        selected={selectedDeadline}
+                        onChange={(date) => setSelectedDeadline(date)}
+                        dateFormat="yyyy-MM-dd"
+                        minDate={new Date()}
+                        placeholderText="Select a deadline"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+                        isClearable
+                        withPortal
+                    />
+                </div>
+
+                {error && <p className="text-sm text-red-600">{error}</p>}
+
+                <div className="flex justify-end gap-2 pt-2">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium hover:bg-slate-100"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={submitting}
+                        className="rounded-lg bg-purple-700 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-800 disabled:opacity-50"
+                    >
+                        {submitting ? "Creating..." : "Create Task"}
+                    </button>
+                </div>
+            </form>
+        </Modal>
     );
 }
 

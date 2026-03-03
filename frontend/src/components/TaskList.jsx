@@ -1,5 +1,29 @@
 import { AiOutlineDelete, AiOutlineEdit } from "react-icons/ai";
-import { MdOutlineCheckBoxOutlineBlank, MdCheckBox } from "react-icons/md";
+import { MdOutlineCheckBoxOutlineBlank, MdCheckBox, MdOutlineEvent } from "react-icons/md";
+
+const formatDeadline = (value) => {
+    if (!value) return "";
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+
+    return new Intl.DateTimeFormat("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric"
+    }).format(date);
+};
+
+const isOverdue = (value) => {
+    if (!value) return false;
+
+    const due = new Date(value);
+    const now = new Date();
+    due.setHours(23, 59, 59, 999); // consider overdue after due day ends
+
+    return due < now;
+};
 
 function TaskList({ tasks, onDeleteTask, onToggleTaskStatus }) {
     return (
@@ -23,6 +47,15 @@ function TaskList({ tasks, onDeleteTask, onToggleTaskStatus }) {
                                     <h2 className='font-semibold'>{task.title || "(Untitled task)"}</h2>
                                     <p className='text-sm text-slate-600'>{task.description || "No description"}</p>
                                     <p className='mt-2 text-xs text-slate-500'>{task.category || "uncategorized"} | {task.status || "pending"}</p>
+                                    {task.deadline && (
+                                        <div
+                                            className={`mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium
+                                             ${isOverdue(task.deadline) ? "bg-red-100 text-red-700" : "bg-purple-100 text-purple-700"}`}
+                                        >
+                                            <MdOutlineEvent size={14} />
+                                            <span>{formatDeadline(task.deadline)}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div className='flex items-center gap-2'>
