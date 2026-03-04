@@ -6,13 +6,11 @@ const allowedCategory = ["work", "personal", "study", "health", "hobbies", "othe
 export const createTaskValidator = [
     body("title")
         .trim()
-        .isLength({ min: 1, max: 120 }).withMessage("Title must be 1-120 characters long")
-        .escape(),
+        .isLength({ min: 1, max: 120 }).withMessage("Title must be 1-120 characters long"),
     body("description")
         .optional({ checkFalsy: true })
         .trim()
-        .isLength({ max: 1000 }).withMessage("Description must be at most 1000 characters long")
-        .escape(),
+        .isLength({ max: 1000 }).withMessage("Description must be at most 1000 characters long"),
     body("category")
         .optional()
         .isIn(allowedCategory).withMessage("Category is invalid"),
@@ -29,13 +27,11 @@ export const updateTaskValidator = [
     body("title")
         .optional()
         .trim()
-        .isLength({ min: 1, max: 120 }).withMessage("Title must be 1-120 characters long")
-        .escape(),
+        .isLength({ min: 1, max: 120 }).withMessage("Title must be 1-120 characters long"),
     body("description")
         .optional({ checkFalsy: true })
         .trim()
-        .isLength({ max: 1000 }).withMessage("Description must be at most 1000 characters long")
-        .escape(),
+        .isLength({ max: 1000 }).withMessage("Description must be at most 1000 characters long"),
     body("category")
         .optional()
         .isIn(allowedCategory).withMessage("Category is invalid"),

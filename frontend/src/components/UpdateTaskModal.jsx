@@ -1,19 +1,11 @@
-import { useState } from "react";
-import { useTask } from "../task/useTask.js";
+import { useState } from 'react';
+import { useTask } from '../task/useTask.js';
 import { toast } from "react-toastify";
-import Modal from "./Modal.jsx";
+import Modal from './Modal.jsx';
 import Select from "react-select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { BiSolidError } from "react-icons/bi";
-
-const INITIAL_FORM = {
-    title: "",
-    description: "",
-    category: "other",
-    deadline: "",
-    status: "pending"
-};
 
 const categoryOptions = [
     { value: "other", label: "Other" },
@@ -29,52 +21,83 @@ const statusOptions = [
     { value: "completed", label: "Completed" }
 ];
 
-function CreateTaskModal({ onClose }) {
-    const { createTask } = useTask();
-    const [form, setForm] = useState(INITIAL_FORM);
-    const [selectedDeadline, setSelectedDeadline] = useState(null);
+function UpdateTaskModal({ task, onClose }) {
+    // Functions to convert dates to YYYY-MM-DD format
+    const toDateInput = (value) => (value ? String(value).slice(0,10) : "");
+    const dateToYMD = (date) => (date ? date.toLocaleDateString("en-CA") : "");
+
+    const initialForm = {
+        title: task.title ?? "",
+        description: task.description ?? "",
+        category: task.category ?? "other",
+        status: task.status ?? "pending",
+        deadline: toDateInput(task.deadline)
+    };
+
+    const { updateTask } = useTask();
+    const [form, setForm] = useState(initialForm);
+    const [selectedDeadline, setSelectedDeadline] = useState(initialForm.deadline ? new Date(initialForm.deadline) : null);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
 
-    const handleChange = (event) => {
-        const { name, value } = event.target;
-        setForm((prev) => ({ ...prev, [name]: value}));
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setForm((prev) => ({...prev, [name]: value}));
     };
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
+    const buildUpdatePayload = () => {
+        const current = {
+            ...form,
+            title: form.title.trim(),
+            description: form.description.trim(),
+            deadline: dateToYMD(selectedDeadline)
+        };
+
+        const original = {
+            title: task.title ?? "",
+            description: task.description ?? "",
+            category: task.category ?? "other",
+            status: task.status ?? "pending",
+            deadline: toDateInput(task.deadline)
+        };
+
+        // Compare current form values to original task values to find changed values that need to be updated
+        const changed = {};
+
+        for (const key of Object.keys(current)) {
+            if (current[key] !== original[key]) {
+                changed[key] = current[key]
+            }
+        }
+
+        return changed;
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
         setError("");
 
-        const title = form.title.trim();
-        if (!title) {
-            setError("Title is required");
+        const payload = buildUpdatePayload();
+        if (Object.keys(payload).length === 0) {
+            setError("No changes to update");
             return;
         }
 
-        const deadline = selectedDeadline ? selectedDeadline.toLocaleDateString("en-CA") : undefined // yyyy-mm-dd
-
         setSubmitting(true);
-        try {
-            const res = await createTask({
-                title,
-                description: form.description.trim(),
-                category: form.category,
-                deadline,
-                status: form.status
-            });
 
-            toast.success(res?.message || "Task created successfully");
+        try {
+            const res = await updateTask(task.id, payload);
+            toast.success(res?.message || "Task updated successfully");
             onClose();
         } catch (err) {
-            setError(err?.message || "Failed to create task");
-            toast.error(err?.message || "Failed to create task");
+            setError(err?.message || "Failed to update task");
         } finally {
             setSubmitting(false);
         }
     };
 
     return (
-        <Modal title={"Create Task"} onClose={onClose}>
+        <Modal title={"Update Task"} onClose={onClose}>
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label className="mb-1 block text-sm font-medium text-slate-700">Title</label>
@@ -193,7 +216,7 @@ function CreateTaskModal({ onClose }) {
                         disabled={submitting}
                         className="rounded-lg bg-purple-700 px-4 py-2 text-sm font-semibold text-white cursor-pointer hover:bg-purple-800 disabled:opacity-50"
                     >
-                        {submitting ? "Creating..." : "Create Task"}
+                        {submitting ? "Updating..." : "Update Task"}
                     </button>
                 </div>
             </form>
@@ -201,4 +224,4 @@ function CreateTaskModal({ onClose }) {
     );
 }
 
-export default CreateTaskModal;
+export default UpdateTaskModal;

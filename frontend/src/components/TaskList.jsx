@@ -1,3 +1,6 @@
+import { useState } from "react";
+import DeleteTaskModal from "../components/DeleteTaskModal.jsx";
+import UpdateTaskModal from "./UpdateTaskModal.jsx";
 import { AiOutlineDelete, AiOutlineEdit } from "react-icons/ai";
 import { MdOutlineCheckBoxOutlineBlank, MdCheckBox, MdOutlineEvent } from "react-icons/md";
 
@@ -25,61 +28,70 @@ const isOverdue = (value) => {
     return due < now;
 };
 
-function TaskList({ tasks, onDeleteTask, onToggleTaskStatus }) {
-    return (
-        <ul className='mt-6 space-y-4'>
-            {tasks.map((task) => {
-                const isCompleted = task.status === "completed";
+function TaskList({ tasks, onToggleTaskStatus }) {
+    const [taskToDelete, setTaskToDelete] = useState(null);
+    const [taskToUpdate, setTaskToUpdate] = useState(null);
 
-                return (
-                    <li key={task.id} className='rounded-xl border border-white/60 bg-purple-50/85 p-4 shadow-lg hover:bg-white hover:shadow-xl'>
-                        <div className='flex items-start justify-between gap-4'>
-                            <div className='flex items-start gap-3'>
-                                <button
-                                    type='button'
-                                    aria-label={isCompleted ? "Mark task as pending" : "Mark task as completed"}
-                                    className="cursor-pointer pt-0.5 hover:text-purple-800"
-                                    onClick={() => onToggleTaskStatus(task)}
-                                >
-                                    {isCompleted ? <MdCheckBox size={22}/> : <MdOutlineCheckBoxOutlineBlank size={22}/>}
-                                </button>
-                                <div>
-                                    <h2 className='font-semibold'>{task.title || "(Untitled task)"}</h2>
-                                    <p className='text-sm text-slate-600'>{task.description || "No description"}</p>
-                                    <p className='mt-2 text-xs text-slate-500'>{task.category || "uncategorized"} | {task.status || "pending"}</p>
-                                    {task.deadline && (
-                                        <div
-                                            className={`mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium
-                                             ${isOverdue(task.deadline) ? "bg-red-100 text-red-700" : "bg-purple-100 text-purple-700"}`}
-                                        >
-                                            <MdOutlineEvent size={14} />
-                                            <span>{formatDeadline(task.deadline)}</span>
-                                        </div>
-                                    )}
+    return (
+        <>
+            <ul className='mt-6 space-y-4'>
+                {tasks.map((task) => {
+                    const isCompleted = task.status === "completed";
+
+                    return (
+                        <li key={task.id} className='rounded-xl border border-white/60 bg-purple-50/85 p-4 shadow-lg hover:bg-white hover:shadow-xl'>
+                            <div className='flex items-start justify-between gap-4'>
+                                <div className='flex items-start gap-3'>
+                                    <button
+                                        type='button'
+                                        aria-label={isCompleted ? "Mark task as pending" : "Mark task as completed"}
+                                        className="cursor-pointer pt-0.5 hover:text-purple-800"
+                                        onClick={() => onToggleTaskStatus(task)}
+                                    >
+                                        {isCompleted ? <MdCheckBox size={22}/> : <MdOutlineCheckBoxOutlineBlank size={22}/>}
+                                    </button>
+                                    <div>
+                                        <h2 className='font-semibold'>{task.title || "(Untitled task)"}</h2>
+                                        <p className='text-sm text-slate-600'>{task.description || "No description"}</p>
+                                        <p className='mt-2 text-xs text-slate-500'>{task.category || "uncategorized"} | {task.status || "pending"}</p>
+                                        {task.deadline && (
+                                            <div
+                                                className={`mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium
+                                                ${isOverdue(task.deadline) ? "bg-red-100 text-red-700" : "bg-purple-100 text-purple-700"}`}
+                                            >
+                                                <MdOutlineEvent size={14} />
+                                                <span>{formatDeadline(task.deadline)}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className='flex items-center gap-2'>
+                                    <button
+                                        type='button'
+                                        aria-label='Delete Task'
+                                        className='cursor-pointer hover:text-purple-800'
+                                        onClick={() => setTaskToDelete(task)}
+                                    >
+                                        <AiOutlineDelete size={20}/>
+                                    </button>
+                                    <button
+                                        type='button'
+                                        aria-label='Edit Task'
+                                        className='cursor-pointer hover:text-purple-800'
+                                        onClick={() => setTaskToUpdate(task)}
+                                    >
+                                        <AiOutlineEdit size={20}/>
+                                    </button>
                                 </div>
                             </div>
-                            <div className='flex items-center gap-2'>
-                                <button
-                                    type='button'
-                                    aria-label='Delete Task'
-                                    className='cursor-pointer hover:text-purple-800'
-                                    onClick={() => window.confirm("Delete this task?") && onDeleteTask(task.id)}
-                                >
-                                    <AiOutlineDelete size={20}/>
-                                </button>
-                                <button
-                                    type='button'
-                                    aria-label='Edit Task'
-                                    className='cursor-pointer hover:text-purple-800'
-                                >
-                                    <AiOutlineEdit size={20}/>
-                                </button>
-                            </div>
-                        </div>
-                    </li>
-                );
-            })}
-        </ul>
+                        </li>
+                    );
+                })}
+            </ul>
+
+            {taskToDelete && <DeleteTaskModal taskId={taskToDelete.id} onClose={() => setTaskToDelete(null)} />}
+            {taskToUpdate && <UpdateTaskModal task={taskToUpdate} onClose={() => setTaskToUpdate(null)} />}
+        </>
     );
 }
 

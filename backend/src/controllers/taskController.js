@@ -32,6 +32,11 @@ export const createTask = async (req, res) => {
         return sendSuccess(res, "Task created successfully", { taskId: insertId }, 201);
     } catch (error) {
         console.error(error);
+
+        if (error.code === "ER_DATA_TOO_LONG") {
+            return sendError(res, "One or more fields are too long", 400);
+        }
+
         return sendError(res, "Server error");
     }
 };
@@ -58,6 +63,11 @@ export const modifyTask = async (req, res) => {
         return sendSuccess(res, "Task updated successfully");
     } catch (error) {
         console.error(error);
+
+        if (error.code === "ER_DATA_TOO_LONG") {
+            return sendError(res, "One or more fields are too long", 400);
+        }
+
         return sendError(res, "Server error");
     }
 };

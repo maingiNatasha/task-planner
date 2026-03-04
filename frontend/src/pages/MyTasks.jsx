@@ -15,7 +15,7 @@ const FILTERS = [
 ];
 
 function MyTasks() {
-    const { tasks, loading, error, refetch, deleteTask, updateTask } = useTask();
+    const { tasks, loading, error, refetch, updateTask } = useTask();
     const [statusFilter, setStatusFilter] = useState("all");
     const [showCreateTask, setShowCreateTask] = useState(false);
 
@@ -25,8 +25,17 @@ function MyTasks() {
     };
 
     const filteredTasks = useMemo(() => {
-        if (statusFilter === "all") return tasks;
-        return tasks.filter((task) => task.status === statusFilter);
+        const base = statusFilter === "all" ? tasks : tasks.filter((task) => task.status === statusFilter);
+
+        return [...base].sort((a, b) => {
+            // Put tasks without deadline at the end
+            if (!a.deadline && !b.deadline) return 0;
+            if (!a.deadline) return 1;
+            if (!b.deadline) return -1;
+
+            // Earlier deadline first
+            return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+        });
     }, [tasks, statusFilter]);
 
     return (
@@ -96,7 +105,7 @@ function MyTasks() {
                         </div>
                     )}
 
-                    <TaskList tasks={filteredTasks} onDeleteTask={deleteTask} onToggleTaskStatus={toggleTaskStatus} />
+                    <TaskList tasks={filteredTasks} onToggleTaskStatus={toggleTaskStatus} />
 
                     {showCreateTask && <CreateTaskModal onClose={() => setShowCreateTask(false)} />}
                 </div>

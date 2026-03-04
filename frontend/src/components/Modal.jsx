@@ -37,12 +37,12 @@ function Modal({ title, onClose, children }) {
                      ${mounted ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-95 opacity-0"}`}
                 >
                     <div className="flex items-center justify-between px-5 py-4">
-                        <h2 className="text-lg font-bold">{title}</h2>
+                        <h2 className="text-xl font-bold tracking-tight text-slate-800">{title}</h2>
                         <button
                             type="button"
                             onClick={onClose}
                             aria-label="Close modal"
-                            className="grid h-9 w-9 place-items-center rounded-md hover:bg-purple-100"
+                            className="grid h-9 w-9 place-items-center rounded-md cursor-pointer hover:bg-purple-50"
                         >
                             <FiX size={20} />
                         </button>
