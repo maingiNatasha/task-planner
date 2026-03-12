@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback } from "react";
 import { useProfile } from "../profile/useProfile.js";
-import { useTask } from "../task/useTask.js";
+import { useTasks } from "../tasks/useTasks.js";
 import PageLayout from "../components/PageLayout.jsx";
 import Loader from '../components/Loader.jsx';
 import TaskList from '../components/TaskList.jsx';
@@ -9,7 +9,7 @@ import { MdAddTask } from "react-icons/md";
 
 function Home() {
     const { profile } = useProfile();
-    const { tasks, loading, error, refetch, updateTask } = useTask();
+    const { tasks, loading, error, refetch, updateTask } = useTasks();
     const [showCreateTask, setShowCreateTask] = useState(false);
 
     // Normalize "today" to date-only so time does not affect comparisons.

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../auth/useAuth.js";
 import { taskApi } from "../api/task.js";
-import TaskContext from "./TaskContext.jsx";
+import TasksContext from "./TasksContext.jsx";
 
-export function TaskProvider({ children }) {
+export function TasksProvider({ children }) {
     const { user, isAuthenticated, loading: authLoading } = useAuth();
 
     const [tasks, setTasks] = useState([]);
@@ -84,8 +84,8 @@ export function TaskProvider({ children }) {
     };
 
     return (
-        <TaskContext.Provider value={value}>
+        <TasksContext.Provider value={value}>
             {children}
-        </TaskContext.Provider>
+        </TasksContext.Provider>
     );
 }

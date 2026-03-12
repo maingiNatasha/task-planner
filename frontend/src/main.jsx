@@ -5,16 +5,16 @@ import './index.css'
 import App from './App.jsx'
 import { AuthProvider } from "./auth/AuthProvider.jsx";
 import { ProfileProvider } from './profile/ProfileProvider.jsx';
-import { TaskProvider } from './task/TaskProvider.jsx';
+import { TasksProvider } from './tasks/TasksProvider.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
         <ProfileProvider>
-          <TaskProvider>
+          <TasksProvider>
             <App />
-          </TaskProvider>
+          </TasksProvider>
         </ProfileProvider>
       </AuthProvider>
     </BrowserRouter>

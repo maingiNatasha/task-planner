@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useTask } from '../task/useTask.js';
+import { useTasks } from '../tasks/useTasks.js';
 import { toast } from "react-toastify";
 import Modal from './Modal.jsx';
 import Select from "react-select";
@@ -34,7 +34,7 @@ function UpdateTaskModal({ task, onClose }) {
         deadline: toDateInput(task.deadline)
     };
 
-    const { updateTask } = useTask();
+    const { updateTask } = useTasks();
     const [form, setForm] = useState(initialForm);
     const [selectedDeadline, setSelectedDeadline] = useState(initialForm.deadline ? new Date(initialForm.deadline) : null);
     const [submitting, setSubmitting] = useState(false);

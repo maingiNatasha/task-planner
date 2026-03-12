@@ -1,10 +1,10 @@
 import { useState } from "react";
 import Modal from "./Modal.jsx";
-import { useTask } from "../task/useTask.js";
+import { useTasks } from "../tasks/useTasks.js";
 import { toast } from "react-toastify";
 
 function DeleteTaskModal({ taskId, onClose}) {
-    const { deleteTask } = useTask();
+    const { deleteTask } = useTasks();
     const [submitting, setSubmitting] = useState(false);
 
     const handleDelete = async (taskId) => {

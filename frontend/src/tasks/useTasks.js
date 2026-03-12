@@ -1,8 +1,8 @@
 import { useContext } from "react";
-import TaskContext from "./TaskContext.jsx";
+import TasksContext from "./TasksContext.jsx";
 
-export function useTask() {
-    const context = useContext(TaskContext);
+export function useTasks() {
+    const context = useContext(TasksContext);
 
     if (!context) {
         throw new Error("useTask must be used inside <TaskProvider>");

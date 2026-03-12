@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTask } from "../task/useTask.js";
+import { useTasks } from "../tasks/useTasks.js";
 import { toast } from "react-toastify";
 import Modal from "./Modal.jsx";
 import Select from "react-select";
@@ -30,7 +30,7 @@ const statusOptions = [
 ];
 
 function CreateTaskModal({ onClose }) {
-    const { createTask } = useTask();
+    const { createTask } = useTasks();
     const [form, setForm] = useState(INITIAL_FORM);
     const [selectedDeadline, setSelectedDeadline] = useState(null);
     const [submitting, setSubmitting] = useState(false);
