@@ -1,22 +1,22 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { authApi } from "../api/auth.js";
-import AuthContext from "./AuthContext.jsx";
+import { AuthStateContext, AuthActionsContext } from "./AuthContext.jsx";
 import { setUnauthorizedHandler } from "./authEvents.js";
 
 export function AuthProvider({ children }) {
     const navigate = useNavigate();
+
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+
     const unauthorizedHandledRef = useRef(false);
     const hadSessionRef = useRef(false);
-
-    // Track bootstrap state inside the unauthorized handler closure
-    const loadingRef = useRef(loading);
+    const loadingRef = useRef(loading); // Track bootstrap state inside the unauthorized handler closure
 
     // Fetch current user based on cookie
-    const refreshUser = async () => {
+    const refreshUser = useCallback(async () => {
         try {
             const res = await authApi.me();
             const currentUser = res?.data?.user ?? null;
@@ -33,18 +33,14 @@ export function AuthProvider({ children }) {
             setUser(null);
             return null;
         }
-    };
+    }, []);
 
-    const login = async (form) => {
+    const login = useCallback(async (form) => {
         await authApi.login(form.email, form.password, form.remember); // sets HttpOnly cookie
         return refreshUser(); // populate user state
-    }
+    }, [refreshUser])
 
-    const register = async (form) => {
-        await authApi.register(form.email, form.password);
-    }
-
-    const logout = async () => {
+    const logout = useCallback(async () => {
         try {
             await authApi.logout(); // clears cookie
             toast.success("Logged out successfully");
@@ -55,6 +51,11 @@ export function AuthProvider({ children }) {
             hadSessionRef.current = false;
             navigate("/login", { replace: true });
         }
+    }, [navigate]);
+
+    // The don't need useCallback
+    const register = async (form) => {
+        await authApi.register(form.email, form.password);
     };
 
     const forgotPassword = async (email) => {
@@ -68,12 +69,14 @@ export function AuthProvider({ children }) {
     // Bootstrap: on initial app load, check if cookie exists by calling /auth/user
     // Bootstrapping = the process of restoring auth state when the app first loads.
     useEffect(() => {
-        (async () => {
+        const init = async () => {
             setLoading(true);
             await refreshUser();
             setLoading(false);
-        })();
-    }, []);
+        };
+
+        init();
+    }, [refreshUser]);
 
     useEffect(() => {
         // Keep a mutable loading flag for the unauthorized handler
@@ -106,20 +109,25 @@ export function AuthProvider({ children }) {
         };
     }, [navigate]);
 
-    const value = {
+    const stateValue = useMemo(() => ({
         user,
         isAuthenticated: !!user,
-        loading,
+        loading
+    }), [user, loading]);
+
+    const actionsValue = useMemo(() => ({
         login,
-        register,
         logout,
         refreshUser,
+        register,
         forgotPassword,
         resetPassword
-    };
+    }), [login, logout, refreshUser]);
 
     return (
-    <AuthContext.Provider value={value}>
-        {children}
-    </AuthContext.Provider>);
+    <AuthStateContext.Provider value={stateValue}>
+        <AuthActionsContext.Provider value={actionsValue}>
+            {children}
+        </AuthActionsContext.Provider>
+    </AuthStateContext.Provider>);
 }

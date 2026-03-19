@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import PageLayout from "../components/PageLayout.jsx";
-import { useAuth } from "../auth/useAuth.js";
+import { useAuthState, useAuthActions } from "../auth/useAuth.js";
 import { useProfile } from "../profile/useProfile.js";
 
 const EMPTY_FORM = {
@@ -11,7 +11,8 @@ const EMPTY_FORM = {
 };
 
 function UserProfile() {
-    const { user, logout } = useAuth();
+    const { user } = useAuthState();
+    const { logout } = useAuthActions();
     const { profile, loading, error, saveProfile } = useProfile(user?.id);
     const [form, setForm] = useState(EMPTY_FORM);
     const [saving, setSaving] = useState(false);

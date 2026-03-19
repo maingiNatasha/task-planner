@@ -1,24 +1,19 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { profileApi } from "../api/profile.js";
-import { useAuth } from "../auth/useAuth.js";
+import { useAuthState } from "../auth/useAuth.js";
 import ProfileContext from "./ProfileContext.jsx";
 
 export function ProfileProvider({ children }) {
-    const { user, isAuthenticated, loading: authLoading } = useAuth();
-
+    const { user, isAuthenticated, loading: authLoading } = useAuthState();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const clearProfile = useCallback(() => {
-        setProfile(null);
-        setError(null);
-        setLoading(false);
-    }, []);
-
     const fetchProfile = useCallback(async () => {
         if (!isAuthenticated || !user?.id) {
-            clearProfile();
+            setProfile(null);
+            setError(null);
+            setLoading(false);
             return null;
         }
 
@@ -37,7 +32,7 @@ export function ProfileProvider({ children }) {
         } finally {
             setLoading(false);
         }
-    }, [isAuthenticated, user?.id, clearProfile]);
+    }, [isAuthenticated, user?.id]);
 
     const saveProfile = useCallback(async (payload) => {
         const res = await profileApi.saveProfile(payload);
@@ -47,21 +42,22 @@ export function ProfileProvider({ children }) {
     }, []);
 
     useEffect(() => {
-        if (authLoading) {
-            setLoading(true);
-            return;
+        if (!authLoading && isAuthenticated) {
+            fetchProfile();
+        } else if (!isAuthenticated) {
+            setProfile(null);
+            setError(null);
         }
 
-        fetchProfile();
-    }, [authLoading, fetchProfile]);
+    }, [authLoading, isAuthenticated, fetchProfile]);
 
-    const value = {
+    const value = useMemo(() => ({
         profile,
         loading,
         error,
         refetch: fetchProfile,
         saveProfile,
-    };
+    }), [profile, loading, error, fetchProfile, saveProfile]);
 
     return (
         <ProfileContext.Provider value={value}>

@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { useLocation, useNavigate, Navigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useAuth } from "../auth/useAuth.js";
+import { useAuthState, useAuthActions } from "../auth/useAuth.js";
 import FormLayout from '../components/FormLayout.jsx';
 import { FaSignInAlt } from "react-icons/fa";
 
 function Login() {
+    const { isAuthenticated, loading } = useAuthState();
+    const { login } = useAuthActions();
     const navigate = useNavigate();
     const location = useLocation();
     const [form, setForm] = useState({ email: "", password: "", remember: false });
-    const { isAuthenticated, loading, login } = useAuth();
     const [submitting, setSubmitting] = useState(false);
 
     // If user is already logged in, don't show login form

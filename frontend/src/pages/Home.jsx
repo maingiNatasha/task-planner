@@ -1,6 +1,6 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState } from "react";
 import { useProfile } from "../profile/useProfile.js";
-import { useTasks } from "../tasks/useTasks.js";
+import { useTasksState, useTasksActions } from "../tasks/useTasks.js";
 import PageLayout from "../components/PageLayout.jsx";
 import Loader from '../components/Loader.jsx';
 import TaskList from '../components/TaskList.jsx';
@@ -9,14 +9,12 @@ import { MdAddTask } from "react-icons/md";
 
 function Home() {
     const { profile } = useProfile();
-    const { tasks, loading, error, refetch, updateTask } = useTasks();
+    const { tasks, loading, error } = useTasksState();
+    const { refetch, updateTask } = useTasksActions();
     const [showCreateTask, setShowCreateTask] = useState(false);
 
-    // Normalize "today" to date-only so time does not affect comparisons.
-    const today = useMemo(() => {
-        const now = new Date();
-        return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    }, []);
+    // Always current date (no stale "today" issue)
+    const today = new Date();
 
     // Safely parse a deadline-like value into a Date.
     const toDate = (value) => {
@@ -29,22 +27,22 @@ function Home() {
     const isSameDay = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
     // Overdue means due date has passed end-of-day.
-    const isOverdue = useCallback((value) => {
+    const isOverdue = (value) => {
         const due = toDate(value);
         if (!due) return false;
         due.setHours(23, 59, 59, 999);
         return due < new Date();
-    }, []);
+    };
 
     // Task is due on the same calendar day as "today".
-    const isDueToday = useCallback((value) => {
+    const isDueToday = (value) => {
         const due = toDate(value);
         if (!due) return false;
         return isSameDay(due, today);
-    }, [today]);
+    };
 
     // Task is due between today and the next 7 days.
-    const isDueThisWeek = useCallback((value) => {
+    const isDueThisWeek = (value) => {
         const due = toDate(value);
         if (!due) return false;
 
@@ -54,7 +52,7 @@ function Home() {
 
         due.setHours(0, 0, 0, 0);
         return due >= start && due <= end;
-    }, [today]);
+    };
 
     // Sort by nearest deadline first; tasks without deadline go to the end.
     const sortedByDeadline = (list) =>
@@ -66,27 +64,18 @@ function Home() {
             return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
         });
 
-    const pendingCount = useMemo(
-        () => tasks.filter((task) => task.status === "pending").length,
-        [tasks]
-    );
-
-    const inProgressCount = useMemo(
-        () => tasks.filter((task) => task.status === "in_progress").length,
-        [tasks]
-    );
+    // Count pending and in progress tasks
+    const pendingCount = tasks.filter((task) => task.status === "pending").length;
+    const inProgressCount = tasks.filter((task) => task.status === "in_progress").length;
 
     // Count open tasks that are already overdue.
-    const overdueCount = useMemo(
-        () => tasks.filter((task) => task.status !== "completed" && isOverdue(task.deadline)).length,
-        [tasks, isOverdue]
-    );
+    const overdueCount = tasks.filter((task) => task.status !== "completed" && isOverdue(task.deadline)).length;
 
     // Dashboard list: non-completed tasks that are overdue/due today/due this week.
     const attentionTasks = useMemo(() =>{
         const base = tasks.filter((task) => task.status !== "completed" && (isOverdue(task.deadline) || isDueToday(task.deadline) || isDueThisWeek(task.deadline)));
         return sortedByDeadline(base).slice(0, 8);
-    }, [tasks, isOverdue, isDueToday, isDueThisWeek]);
+    }, [tasks]);
 
     // Quick toggle used by the task list checkbox.
     const toggleTaskStatus = async (task) => {

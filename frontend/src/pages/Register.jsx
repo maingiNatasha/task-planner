@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link, Navigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import FormLayout from '../components/FormLayout.jsx';
-import { useAuth } from "../auth/useAuth.js";
+import { useAuthState, useAuthActions } from "../auth/useAuth.js";
 import { MdPersonAddAlt1, MdError } from "react-icons/md";
 import { FaCheckCircle } from "react-icons/fa";
 
@@ -17,11 +17,12 @@ function getPasswordChecks(password) {
 }
 
 function Register() {
+    const { isAuthenticated, loading } = useAuthState();
+    const { register } = useAuthActions();
     const navigate = useNavigate();
     const [form, setForm] = useState({ email: "", password: "" });
     const [confirmPassword, setConfirmPassword] = useState("");
     const [submitting, setSubmitting] = useState(false);
-    const { register, isAuthenticated, loading } = useAuth();
 
     // Password checks
     const checks = getPasswordChecks(form.password);

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useAuth } from "../auth/useAuth.js";
+import { useAuthActions } from "../auth/useAuth.js";
 import FormLayout from '../components/FormLayout.jsx';
 import { MdError } from "react-icons/md";
 import { FaCheckCircle } from "react-icons/fa";
@@ -17,11 +17,11 @@ function getPasswordChecks(password) {
 }
 
 function ResetPassword() {
+    const { resetPassword } = useAuthActions();
     const navigate = useNavigate();
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [submitting, setSubmitting] = useState(false);
-    const { resetPassword } = useAuth();
     const [params] = useSearchParams();
     const token = params.get("token");
 

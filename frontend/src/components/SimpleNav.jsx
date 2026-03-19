@@ -1,17 +1,17 @@
 import { useEffect, useRef, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import classNames from "classnames";
-import { useAuth } from "../auth/useAuth.js";
+import { useAuthState } from "../auth/useAuth.js";
 import { useProfile } from "../profile/useProfile.js";
 import Options from "./Options";
 import { FaUserCircle } from "react-icons/fa";
 import { HiOutlineMenu } from "react-icons/hi";
 
 function SimpleNav({ onToggleSidebar }) {
+    const { isAuthenticated, loading, user } = useAuthState();
+    const { profile } = useProfile();
     const [showOptions, setShowOptions] = useState(false);
     const menuWrapperRef = useRef(null);
-    const { isAuthenticated, loading, user } = useAuth();
-    const { profile } = useProfile();
 
     useEffect(() => {
         if (!isAuthenticated) {

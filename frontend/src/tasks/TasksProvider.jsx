@@ -1,24 +1,20 @@
-import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "../auth/useAuth.js";
+import { useCallback, useEffect, useState, useMemo } from "react";
+import { useAuthState } from "../auth/useAuth.js";
 import { taskApi } from "../api/task.js";
-import TasksContext from "./TasksContext.jsx";
+import { TasksStateContext, TasksActionsContext } from "./TasksContext.jsx";
 
 export function TasksProvider({ children }) {
-    const { user, isAuthenticated, loading: authLoading } = useAuth();
-
+    const { user, isAuthenticated, loading: authLoading } = useAuthState();
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-
-    const clearTasks = useCallback(() => {
-        setTasks([]);
-        setError(null);
-        setLoading(false);
-    }, []);
+    const userId = user?.id;
 
     const fetchTasks = useCallback(async () => {
-        if (!isAuthenticated || !user?.id) {
-            clearTasks();
+        if (!isAuthenticated || !userId) {
+            setTasks([]);
+            setError(null);
+            setLoading(false);
             return [];
         }
 
@@ -37,7 +33,7 @@ export function TasksProvider({ children }) {
         } finally {
             setLoading(false);
         }
-    }, [isAuthenticated, user?.id, clearTasks]);
+    }, [isAuthenticated, userId]);
 
     const createTask = useCallback(async (payload) => {
         const res = await taskApi.createTask(payload);
@@ -64,28 +60,34 @@ export function TasksProvider({ children }) {
     }, [fetchTasks]);
 
     useEffect(() => {
-        if (authLoading) {
-            setLoading(true);
-            return;
+        if (!authLoading && isAuthenticated) {
+            fetchTasks();
+        } else if (!isAuthenticated) {
+            setTasks([]);
+            setError(null);
         }
 
-        fetchTasks();
-    }, [authLoading, fetchTasks]);
+    }, [authLoading, isAuthenticated, fetchTasks]);
 
-    const value = {
+    const stateValue = useMemo(() => ({
         tasks,
         loading,
-        error,
+        error
+    }), [tasks, loading, error]);
+
+    const actionsValue = useMemo(() => ({
         refetch: fetchTasks,
         createTask,
         updateTask,
         deleteTask,
         deleteTasks
-    };
+    }), [fetchTasks, createTask, updateTask, deleteTask, deleteTasks]);
 
     return (
-        <TasksContext.Provider value={value}>
-            {children}
-        </TasksContext.Provider>
+        <TasksStateContext.Provider value={stateValue}>
+            <TasksActionsContext.Provider value={actionsValue}>
+                {children}
+            </TasksActionsContext.Provider>
+        </TasksStateContext.Provider>
     );
 }

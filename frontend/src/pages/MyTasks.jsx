@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useTasks } from "../tasks/useTasks.js";
+import { useTasksState, useTasksActions } from "../tasks/useTasks.js";
 import PageLayout from '../components/PageLayout.jsx';
 import Loader from '../components/Loader.jsx';
 import TaskList from '../components/TaskList.jsx';
@@ -15,7 +15,8 @@ const FILTERS = [
 ];
 
 function MyTasks() {
-    const { tasks, loading, error, refetch, updateTask } = useTasks();
+    const { tasks, loading, error } = useTasksState();
+    const { refetch, updateTask } = useTasksActions();
     const [statusFilter, setStatusFilter] = useState("all");
     const [showCreateTask, setShowCreateTask] = useState(false);
 

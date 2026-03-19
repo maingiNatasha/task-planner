@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useAuth } from "../auth/useAuth.js";
+import { useAuthActions } from "../auth/useAuth.js";
 import FormLayout from '../components/FormLayout.jsx';
 
 function ForgotPassword() {
     const [submitting, setSubmitting] = useState(false);
     const [email, setEmail] = useState("");
-    const { forgotPassword } = useAuth();
+    const { forgotPassword } = useAuthActions();
 
     async function handleSubmit(e) {
         e.preventDefault();

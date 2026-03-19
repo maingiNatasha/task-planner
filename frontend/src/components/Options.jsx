@@ -1,4 +1,4 @@
-import { useAuth } from "../auth/useAuth.js";
+import { useAuthState, useAuthActions } from "../auth/useAuth.js";
 import { useProfile } from "../profile/useProfile.js";
 import { Link } from "react-router-dom";
 import { FaUserCircle } from "react-icons/fa";
@@ -6,7 +6,8 @@ import { PiSignOut } from "react-icons/pi";
 import { LiaUser } from "react-icons/lia";
 
 function Options() {
-    const { logout, user } = useAuth();
+    const {  user } = useAuthState();
+    const { logout } = useAuthActions();
     const { profile } = useProfile();
 
     async function handleLogout() {
