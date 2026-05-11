@@ -55,9 +55,9 @@ export const login = async (req, res) => {
         // Set cookie
         const cookieOptions = {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-            path: "/",
+            secure: false, // REQUIRED: Must be false for HTTP IP addresses
+            sameSite: "lax", // Best balance for non-HTTPS setups
+            path: "/", // Ensure it's valid for all paths
         };
 
         // Set maxAge only when rememberMe is true
