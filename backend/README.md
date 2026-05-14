@@ -1,248 +1,174 @@
-# Backend - Authentication API
+# Task Planner Backend API
 
-This is the backend authentication service for the **Fullstack Auth Starter** project.
+Backend service for the Task Planner application.
 
-It provides a **secure, production-ready REST API** handling user authentication flows such as registration, login, and password recovery. The backend is designed to be **reusable**, **well-structured**, and **framework-agnostic** with respect to the frontend.
-
----
+This API handles:
+- authentication
+- password reset by email
+- profile management
+- authenticated task CRUD
 
 ## Tech Stack
 
 - Node.js
 - Express.js
 - MySQL
-- JWT (JSON Web Tokens)
+- JWT
 - bcrypt
-
----
+- express-validator
+- cookie-parser
+- cors
 
 ## Responsibilities
 
-The backend is responsible for:
+- Register and authenticate users
+- Manage session/auth cookies
+- Handle forgot/reset password flows
+- Store and retrieve user profile data
+- Create, read, update, and delete tasks
+- Validate request payloads before controller logic
 
-- User registration
-- User login
-- Password hashing and verification
-- Token-based authentication
-- Password reset (forgot / reset flow)
-- Database interaction and validation
+## Architecture
 
----
+The backend follows a layered structure:
 
-## Architecture Overview
-
-The backend follows a layered architecture with clear separation of concerns:
-
-- **Routes** - Define API endpoints and map requests to controllers
-- **Controllers** - Handle request/response logic
-- **Services** - Contain core business logic
-- **Models** - Handle database queries and persistence
-- **Middleware** - Authentication and request validation
-- **Validators** - Input validation schemas
-- **Utils** - Shared helper functions
-- **DB** - Database connection and configuration
-
-This structure improves maintainability, testability, and reusability.
-
----
+- `routes/`: endpoint definitions
+- `controllers/`: request/response orchestration
+- `services/`: business rules
+- `models/`: database operations
+- `middleware/`: auth + validation handling
+- `validators/`: request schema rules
+- `db/`: connection and schema assets
+- `utils/`: shared helpers
 
 ## Folder Structure
-```
+
+```text
 backend/
 |-- src/
-|   |-- controllers/ # Request handling logic
-|   |-- routes/ # API route definitions
-|   |-- services/ # Business logic
-|   |-- models/ # Database queries
-|   |-- middleware/ # Auth & validation middlewares
-|   |-- db/ # Database connection & config
-|   |-- validators/ # Request validation schemas
-|   |-- utils/ # Helpers and utilities
-|   `-- app.js # Express app setup
-|
-|-- server.js # Application entry point
-|-- .env.example # Environment variable template
+|   |-- controllers/
+|   |-- db/
+|   |-- middleware/
+|   |-- models/
+|   |-- routes/
+|   |-- services/
+|   |-- utils/
+|   |-- validators/
+|   `-- app.js
+|-- server.js
 |-- package.json
 `-- README.md
 ```
----
 
-## Authentication Flow
+## API Base URL
 
-### 1. Registration
-- User submits registration details
-- Password is hashed using bcrypt
-- User record is stored in the database
+Routes are mounted under:
 
-### 2. Login
-- User credentials are validated
-- Password hash is compared
-- JWT is issued on successful authentication
+- `/api`
 
-### 3. Protected Routes
-- Client sends JWT in the `Authorization` header
-- Token is verified via middleware
-- Access is granted or denied accordingly
+## Endpoint Map
 
-### 4. Password Reset
-- User requests password reset
-- Reset token is generated and stored
-- User resets password using valid token
-- Token is invalidated after use
+### Auth (`/api/auth`)
 
----
+- `POST /register`
+- `POST /login`
+- `POST /logout`
+- `GET /user` (protected)
+- `POST /password/forgot`
+- `POST /password/reset`
 
-## Email Scenario (Password Reset)
+### Profile (`/api/profile`)
 
-The password reset flow sends an email containing a one-time reset token:
+- `GET /` (protected)
+- `POST /` (protected, create/update profile)
 
-1. `POST /auth/password/forgot` is called with the user's email.
-2. The API generates a reset token, stores a hashed version in the database, and sets an expiry.
-3. An email is sent via SMTP (see `.env` SMTP settings).
-4. The user clicks the link in the email and submits a new password to `POST /auth/password/reset` along with the token.
-5. The token is validated, the password is updated, and the token is marked used.
+### Tasks (`/api/tasks`)
 
-Notes:
-- Email delivery currently uses a Mailtrap sandbox (development-only) until a production provider is configured.
-- The API responds with success for unknown emails to avoid user enumeration.
-- If SMTP fails, the API still returns success so attackers cannot probe for valid accounts.
+- `GET /` (protected)
+- `POST /` (protected)
+- `PATCH /:id` (protected)
+- `DELETE /:id` (protected)
+- `DELETE /` (protected, bulk delete)
 
-Example Mailtrap sandbox settings (replace with your Mailtrap values):
-```
-SMTP_HOST=sandbox.smtp.mailtrap.io
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=your_mailtrap_username
-SMTP_PASS=your_mailtrap_password
-```
-You can find these credentials in your Mailtrap inbox under SMTP Settings.
+## Authentication Model
 
-Switching providers:
-- Update `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, and `SMTP_PASS` in `.env` to match your SMTP provider.
-- Keep `EMAIL_FROM_NAME` and `EMAIL_FROM_ADDRESS` aligned with your provider's verified sender settings.
+- Protected routes use `authMiddleware`.
+- Frontend and backend are configured for credentialed requests.
+- CORS `origin` is read from `FRONTEND_URL`.
 
----
+## Password Reset Flow
+
+1. Client calls `POST /api/auth/password/forgot` with email.
+2. Server generates a reset token and stores a hashed token with expiry.
+3. Reset link is sent via SMTP.
+4. Client submits `token + new password` to `POST /api/auth/password/reset`.
+5. Server validates token, updates password, and invalidates token.
+
+Security behavior:
+- Forgot-password responses are generic to reduce account enumeration.
+- Passwords are hashed before storage.
 
 ## Environment Variables
 
-Create a `.env` file using `.env.example` as a reference.
+Create `backend/.env` and provide values for your environment.
 
-| Variable | Description |
-| --- | --- |
-| `DB_HOST` | MySQL host |
-| `DB_USER` | MySQL username |
-| `DB_PASSWORD` | MySQL password |
-| `DB_NAME` | Database name |
-| `JWT_SECRET` | JWT signing secret |
-| `JWT_EXPIRES_IN` | JWT expiry (e.g., `15m`) |
-| `RESET_TOKEN_EXPIRES_MINUTES` | Password reset token TTL (minutes) |
-| `FRONTEND_RESET_URL` | Reset URL used in emails |
-| `APP_NAME` | App display name |
-| `APP_URL` | App base URL |
-| `SMTP_HOST` | SMTP host |
-| `SMTP_PORT` | SMTP port |
-| `SMTP_SECURE` | Use TLS (`true`/`false`) |
-| `SMTP_USER` | SMTP username |
-| `SMTP_PASS` | SMTP password/app password |
-| `EMAIL_FROM_NAME` | From name for emails |
-| `EMAIL_FROM_ADDRESS` | From email address |
+Common variables used by this backend:
 
-Never commit your `.env` file.
+- `PORT`
+- `FRONTEND_URL`
+- `DB_HOST`
+- `DB_USER`
+- `DB_PASSWORD`
+- `DB_NAME`
+- `JWT_SECRET`
+- `JWT_EXPIRES_IN`
+- `RESET_TOKEN_EXPIRES_MINUTES`
+- `FRONTEND_RESET_URL`
+- `APP_NAME`
+- `APP_URL`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_SECURE`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `EMAIL_FROM_NAME`
+- `EMAIL_FROM_ADDRESS`
 
----
+Do not commit `.env`.
 
-## Database Schema
+## Database
 
-The database schema is provided in:
+Apply schema from:
 
 - `src/db/schema.sql`
 
-This file is generated using `mysqldump` and contains tables, indexes, and constraints only (no data).
-
----
-
-## Quickstart
+## Local Development
 
 1. Install dependencies:
-   `npm install`
-2. Configure environment:
-   - Copy `.env.example` to `.env`
-   - Fill in values listed above
-3. Set up the database:
-   - Apply `src/db/schema.sql`
-4. Start the dev server:
-   `npm run dev`
 
----
+```bash
+npm install
+```
+
+2. Configure `backend/.env`.
+
+3. Apply database schema.
+
+4. Run dev server:
+
+```bash
+npm run dev
+```
+
+Default server port is `5000` when `PORT` is not set.
 
 ## Scripts
 
-- `npm run dev` - Run the API with nodemon
-- `npm test` - Placeholder (no tests configured)
+- `npm run dev`: start with nodemon
+- `npm test`: placeholder (if tests are not configured)
 
----
+## Notes
 
-## API Endpoints
-
-Use `Authorization: Bearer <token>` for protected routes.
-
-### Quick curl example
-
-Register a user:
-
-```bash
-curl -X POST http://localhost:5000/auth/register \
-  -H "Content-Type: application/json" \
-  -d "{\"email\":\"user@example.com\",\"password\":\"Passw0rd!\"}"
-```
-
-### Authentication
-All routes are prefixed with `/auth`.
-
-| Method | Endpoint                | Description |
-|--------|-------------------------|------------|
-| POST   | /auth/register          | Register a new user |
-| POST   | /auth/login             | Authenticate a user |
-| GET    | /auth/user              | Get current user |
-| POST   | /auth/password/forgot   | Request password reset |
-| POST   | /auth/password/reset    | Reset user password |
-
-### Profile
-All routes are prefixed with `/profile`.
-
-| Method | Endpoint        | Description |
-|--------|-----------------|------------|
-| GET    | /profile        | Get authenticated user profile |
-| PUT    | /profile        | Update authenticated user profile |
-
----
-
-## Postman Collection
-
-All API endpoints are documented and testable via Postman.
-
-**Postman Collection:**
-https://www.postman.com/natashamaingi/my-workspace/collection/27984211-9c21d450-0564-4363-b222-a90ae0d9c843/?action=share&creator=27984211&active-environment=27984211-a3483cb7-b307-4533-9550-5518a8bd2a7f
-
-Import the collection into Postman to:
-- Test authentication flows
-- Explore available endpoints
-- View request/response examples
-
-> The collection includes authentication and profile endpoints.
-
----
-
-## Security Considerations
-
-- Passwords are never stored in plain text
-- bcrypt is used for password hashing
-- JWT secrets are stored securely in environment variables
-- Protected routes require valid tokens
-- Password reset tokens are time-limited
-
----
-
-## Reusability
-
-This backend is designed as a standalone authentication module and can be reused across different applications and architectures.
+- Validation middleware is applied on auth, profile, and task mutation endpoints.
+- Profile write endpoint is `POST /api/profile` (not `PUT`).
+- API route prefixes include `/api` from app-level mounting.

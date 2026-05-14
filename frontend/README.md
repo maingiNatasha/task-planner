@@ -1,16 +1,10 @@
-# Frontend Documentation
+# Task Planner Frontend
 
-This frontend is a React + Vite authentication client that uses cookie-based sessions from the backend API.
+React client for the Task Planner application.
 
-## What This Frontend Does
+This frontend handles authentication UX, protected routing, profile/session-aware navigation, and task-facing user flows via the backend API.
 
-- Handles registration, login, logout, and session restoration.
-- Protects authenticated routes (`/home`) with route guards.
-- Supports forgot-password and reset-password flows.
-- Shows global toast feedback for success and error states.
-- Uses a centralized Axios client with 401 handling.
-
-## Tech Stack
+## Stack
 
 - React 19
 - Vite 7
@@ -18,300 +12,134 @@ This frontend is a React + Vite authentication client that uses cookie-based ses
 - Axios
 - Tailwind CSS 4
 - React Toastify
-- React Icons
-- React Spinners
+
+## What It Does
+
+- Registration, login, logout, and session restore
+- Protected routes with auth guards
+- Forgot-password and reset-password flows
+- Global toast feedback for success/error states
+- Centralized API client with normalized error handling
 
 ## Prerequisites
 
 - Node.js 18+
 - npm
-- Backend API running and reachable
+- Running backend API
 
-Default API base URL fallback:
+Default API base fallback:
 
-`http://localhost:5000/api`
+- `http://localhost:5000/api`
 
 ## Setup
+
+1. Install dependencies:
 
 ```bash
 cd frontend
 npm install
 ```
 
-## Environment Variables
-
-Create `frontend/.env` or `frontend/.env.local`:
+2. Configure environment in `frontend/.env` or `frontend/.env.local`:
 
 ```env
 VITE_API_BASE_URL=http://localhost:5000/api
 ```
 
-`src/api/client.js` uses this value for Axios `baseURL`.
+`src/api/client.js` reads this value for Axios `baseURL`.
 
 ## Scripts
 
-- `npm run dev`: start Vite dev server
-- `npm run build`: create production build
-- `npm run preview`: serve production build locally
+- `npm run dev`: start local dev server
+- `npm run build`: create production bundle
+- `npm run preview`: preview production build
 - `npm run lint`: run ESLint
 
-## High-Level Architecture
+## App Structure
 
-Startup and providers:
+Startup flow:
 
-1. `src/main.jsx` mounts app with:
-   1. `<BrowserRouter>`
-   2. `<AuthProvider>`
-   3. `<App />`
-2. `src/App.jsx` defines route table and mounts `<ToastContainer />`.
+- `src/main.jsx`: mounts `BrowserRouter` + `AuthProvider` + `App`
+- `src/App.jsx`: route table and global `ToastContainer`
 
-Auth state management:
+Auth layer:
 
-- `src/auth/AuthContext.jsx`: React context.
-- `src/auth/useAuth.js`: safe hook wrapper, throws if used outside provider.
-- `src/auth/AuthProvider.jsx`: source of truth for auth state and auth actions.
+- `src/auth/AuthContext.jsx`: auth context
+- `src/auth/AuthProvider.jsx`: auth state + actions
+- `src/auth/useAuth.js`: safe context hook
+- `src/auth/RequireAuth.jsx`: route guard
+- `src/auth/authEvents.js`: unauthorized event channel
 
 Networking:
 
-- `src/api/client.js`: shared Axios instance + response interceptor.
-- `src/api/auth.js`: auth endpoint wrapper functions.
+- `src/api/client.js`: shared Axios instance + interceptor
+- `src/api/auth.js`: auth endpoint wrappers
 
-Route protection:
+Routing helper:
 
-- `src/auth/RequireAuth.jsx`: blocks protected routes for unauthenticated users.
-- `src/routes/HomeRedirect.jsx`: root route (`/`) redirect logic.
+- `src/routes/HomeRedirect.jsx`: root redirect logic
 
-## Routing Map
+## Routes
 
 Defined in `src/App.jsx`:
 
 - `/` -> `HomeRedirect`
-- `/login` -> `Login` (public)
-- `/register` -> `Register` (public)
-- `/forgot-password` -> `ForgotPassword` (public)
-- `/reset-password` -> `ResetPassword` (public)
-- `/home` -> `Home` (protected by `RequireAuth`)
+- `/login` -> public
+- `/register` -> public
+- `/forgot-password` -> public
+- `/reset-password` -> public
+- `/home` -> protected
 - `*` -> `NotFound`
 
-## Core Logic Flow
+## Core Behavior
 
-### 1. App bootstrap and session restore
+Session restore:
 
-Implemented in `src/auth/AuthProvider.jsx`:
+1. `AuthProvider` boots with `loading = true`.
+2. Calls `refreshUser()` (`GET /api/auth/user`).
+3. Hydrates `user` when session is valid; otherwise clears it.
+4. Turns off loading and allows route decisions.
 
-1. On mount, provider sets `loading = true`.
-2. Calls `refreshUser()`.
-3. `refreshUser()` calls `authApi.me()` (`GET /auth/user`).
-4. If backend returns a user, provider sets:
-   - `user` object
-   - `hadSessionRef.current = true`
-   - `unauthorizedHandledRef.current = false`
-5. If request fails, provider sets `user = null`.
-6. Provider sets `loading = false`.
+Auth operations:
 
-Impact on routes:
+- Login calls `POST /api/auth/login`, then re-fetches current user.
+- Register calls `POST /api/auth/register`, then redirects to login.
+- Logout calls `POST /api/auth/logout`, then clears local auth state.
 
-- During bootstrap, `RequireAuth` and `HomeRedirect` render `Loader`.
-- After bootstrap:
-  - Authenticated users can access `/home`.
-  - Unauthenticated users are redirected to `/login` for protected routes.
+Password recovery:
 
-### 2. Login flow
+- Forgot password: `POST /api/auth/password/forgot`.
+- Reset password: `POST /api/auth/password/reset` with `?token=` flow.
 
-From `src/pages/Login.jsx` and provider methods:
+Unauthorized handling:
 
-1. User submits email/password/remember.
-2. `login(form)` in provider calls `authApi.login(...)` (`POST /auth/login`).
-3. Backend sets HttpOnly session cookie.
-4. Provider immediately calls `refreshUser()` to hydrate `user` state.
-5. UI shows success toast and navigates to:
-   - `location.state.from.pathname` when redirected from a protected route, or
-   - `/home` by default.
+- Axios interceptor normalizes API errors.
+- Relevant `401` responses trigger one coordinated auth event.
+- Provider clears stale session and redirects to `/login` when needed.
 
-### 3. Register flow
+## Backend Contract
 
-From `src/pages/Register.jsx`:
+Expected backend endpoints (mounted under `/api`):
 
-1. User enters email/password/confirm password.
-2. Client validates password match before API call.
-3. Calls `register(form)` -> `POST /auth/register`.
-4. On success, shows toast and redirects to `/login`.
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/user`
+- `POST /api/auth/password/forgot`
+- `POST /api/auth/password/reset`
 
-### 4. Forgot password flow
+Backend requirements:
 
-From `src/pages/ForgotPassword.jsx`:
-
-1. User submits email.
-2. Calls `forgotPassword(email)` -> `POST /auth/password/forgot`.
-3. UI always shows the same success toast even on failure.
-
-Reason: avoids user/email enumeration by not revealing account existence.
-
-### 5. Reset password flow
-
-From `src/pages/ResetPassword.jsx`:
-
-1. Reads token from query param: `?token=...`.
-2. Validates token exists before submit.
-3. Validates password and confirm password match.
-4. Calls `resetPassword(token, password)` -> `POST /auth/password/reset`.
-5. On success, shows toast and redirects to `/login`.
-
-### 6. Logout flow
-
-From `src/components/SimpleNav.jsx` and provider:
-
-1. Logout button calls provider `logout()`.
-2. Provider calls `POST /auth/logout`.
-3. In `finally`, provider always clears local user state and navigates to `/login`.
-4. Toast indicates logout result.
-
-## Logic Flow Diagrams (Mermaid)
-
-### App bootstrap and initial routing
-
-```mermaid
-flowchart TD
-    A[App starts] --> B[AuthProvider mounts]
-    B --> C[refreshUser calls GET /auth/user]
-    C --> D{User returned?}
-    D -->|Yes| E[Set user and hadSession=true]
-    D -->|No| F[Set user=null]
-    E --> G[loading=false]
-    F --> G[loading=false]
-    G --> H{Route is / ?}
-    H -->|Yes + authenticated| I[Redirect to /home]
-    H -->|Yes + unauthenticated| J[Redirect to /login]
-    H -->|Protected route + unauthenticated| J
-```
-
-## API Layer Details
-
-### `src/api/auth.js`
-
-Available methods:
-
-- `register(email, password)`
-- `login(email, password, remember)`
-- `logout()`
-- `me()`
-- `forgotPassword(email)`
-- `resetPassword(token, password)`
-
-### `src/api/client.js`
-
-Axios client config:
-
-- `baseURL`: `VITE_API_BASE_URL` or `http://localhost:5000/api`
-- `withCredentials: true` (required for cookie auth)
-- JSON content headers
-
-Response interceptor behavior:
-
-- Success path returns `response.data` directly.
-- Error path normalizes rejects into:
-  - `status`
-  - `message`
-  - `data`
-
-401 handling logic:
-
-- Global 401 handling is skipped for selected auth/public paths.
-- Other 401s trigger `triggerUnauthorized(...)` once (guarded).
-- Message is adjusted for token-expired case.
-
-## Unauthorized Event Flow
-
-Files:
-
-- `src/auth/authEvents.js`
-- `src/auth/AuthProvider.jsx`
-
-Mechanism:
-
-1. `AuthProvider` registers one unauthorized handler via `setUnauthorizedHandler`.
-2. Axios interceptor (`client.js`) calls `triggerUnauthorized` on relevant 401s.
-3. Provider handler decides whether to act:
-   - Ignore during bootstrap loading.
-   - Ignore if no prior session existed (`hadSessionRef` false).
-   - If a session existed and is now invalid, clear user, toast, and redirect `/login`.
-
-This prevents repeated redirect/toast loops from multiple failing requests.
-
-## Route Guard Behavior
-
-### `src/auth/RequireAuth.jsx`
-
-- If `loading` true: render `Loader`.
-- If not authenticated: redirect `/login` and keep original location in `state.from`.
-- If authenticated: render child route via `<Outlet />`.
-
-### `src/routes/HomeRedirect.jsx`
-
-- Used on `/`.
-- If loading: render `Loader`.
-- If authenticated: redirect `/home`.
-- Else: redirect `/login`.
-
-## Page-Level Summary
-
-- `src/pages/Login.jsx`
-  - Redirects authenticated users away from login.
-  - Includes remember-me checkbox and forgot-password link.
-
-- `src/pages/Register.jsx`
-  - Redirects authenticated users away from register.
-  - Includes client-side password strength hints and confirm check.
-
-- `src/pages/ForgotPassword.jsx`
-  - Generic success response for both success/failure states.
-
-- `src/pages/ResetPassword.jsx`
-  - Token-from-query based reset form with validation.
-
-- `src/pages/Home.jsx`
-  - Protected page showing authenticated user email.
-
-- `src/pages/NotFound.jsx`
-  - Catch-all 404 UI with link back to `/`.
-
-## Layout and Shared UI
-
-- `src/components/FormLayout.jsx`: centered card layout for auth forms.
-- `src/components/PageLayout.jsx`: wrapper for authenticated pages (nav, main, footer).
-- `src/components/SimpleNav.jsx`: includes logout action.
-- `src/components/Footer.jsx`: footer text.
-- `src/components/Loader.jsx`: reusable loading screen.
-
-## Styling and Build Configuration
-
-- `src/index.css` imports Tailwind: `@import "tailwindcss";`
-- `vite.config.js` enables React and Tailwind Vite plugins.
-- `eslint.config.js` applies JS + React hooks + Vite refresh lint rules.
-
-## Expected Backend Contract
-
-Based on frontend usage, backend should provide:
-
-- `POST /auth/register`
-- `POST /auth/login`
-- `POST /auth/logout`
-- `GET /auth/user`
-- `POST /auth/password/forgot`
-- `POST /auth/password/reset`
-
-And should support:
-
-- Cookie-based sessions (`withCredentials`)
-- CORS allowing frontend origin with credentials
-- JSON error response with `message` or `error`
+- Credentialed cookie auth support
+- CORS configured for frontend origin with credentials
+- Consistent JSON error responses
 
 ## Troubleshooting
 
-If auth flow does not work:
+If auth or session behavior fails:
 
-1. Confirm `VITE_API_BASE_URL` points to the correct backend.
-2. Confirm backend CORS includes frontend origin and credentials.
-3. Confirm browser is accepting backend cookies.
-4. Inspect network responses for normalized error shape (`status`, `message`, `data`).
-5. Verify reset token is present in URL query string for `/reset-password`.
+1. Verify `VITE_API_BASE_URL`.
+2. Verify backend CORS origin + credentials settings.
+3. Confirm browser cookie acceptance.
+4. Inspect normalized API error payloads (`status`, `message`, `data`).
+5. Confirm reset token exists in `/reset-password?token=...`.
